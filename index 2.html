@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ことばの地図</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #ffffff;
+  --surface: #f7f5f2;
+  --surface-hover: #edeae5;
+  --border: #ddd8d0;
+  --border-focus: #d4854a;
+  --text: #2a2520;
+  --text-muted: #8a8078;
+  --accent: #d4854a;
+  --accent-soft: rgba(212,133,74,0.12);
+  --accent-glow: rgba(212,133,74,0.25);
+  --link: #5a7ea8;
+  --danger: #c25a5a;
+  --tag: #5a7a5a;
+  --tag-soft: rgba(90,122,90,0.12);
+}
+body {
+  font-family: 'Helvetica Neue', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.header {
+  padding: 16px 16px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.word-count { font-size: 12px; color: var(--text-muted); }
+.tabs { display: flex; gap: 0; }
+.tab {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.tab.narrow { flex: 0; padding: 8px 16px; }
+.tab.active {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.content { padding: 16px; }
+.input, .textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input:focus, .textarea:focus { border-color: var(--border-focus); }
+.textarea { min-height: 60px; resize: vertical; }
+.form { background: var(--surface); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+.form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.mb8 { margin-bottom: 8px; }
+.label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.link-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.link-chip {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.link-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:disabled { background: var(--border); color: var(--text-muted); cursor: default; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-weight: 400; }
+.card {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.card:active { background: var(--surface-hover); }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-word { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.lang-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.card-date { font-size: 10px; color: var(--text-muted); }
+.card-meaning { color: var(--text-muted); font-size: 13px; margin-top: 4px; line-height: 1.5; }
+.tag-chip {
+  font-size: 11px;
+  color: var(--tag);
+  background: var(--tag-soft);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+.nav-chip {
+  background: var(--accent-soft);
+  border: none;
+  border-radius: 10px;
+  padding: 2px 8px;
+  color: var(--accent);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.text-btn {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.text-btn.edit { color: var(--link); }
+.text-btn.delete { color: var(--danger); }
+.cards { display: flex; flex-direction: column; gap: 6px; }
+.empty { text-align: center; color: var(--text-muted); padding: 40px; font-size: 13px; }
+.graph-container {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  height: 380px;
+  background: var(--surface);
+}
+.reset-row { margin-top: 24px; text-align: center; }
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 16px;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useEffect, useRef, useCallback, createElement: h } = React;
+
+const LANG_COLORS = {
+  ja: '#c4764a', en: '#5a7ea8', fr: '#a85a7e', de: '#7ea85a',
+  ko: '#a8965a', zh: '#5aa896', la: '#965aa8', other: '#8a8078'
+};
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function loadWords() {
+  try { return JSON.parse(localStorage.getItem('wordmap-data') || '[]'); }
+  catch { return []; }
+}
+function saveWords(w) {
+  localStorage.setItem('wordmap-data', JSON.stringify(w));
+}
+
+// Force graph hook
+function useForceGraph(nodes, edges, w, ht) {
+  const [pos, setPos] = useState({});
+  const pRef = useRef({});
+  const vRef = useRef({});
+  const aRef = useRef(null);
+  const iRef = useRef(0);
+
+  useEffect(() => {
+    if (!nodes.length) { setPos({}); return; }
+    const p = { ...pRef.current }, v = { ...vRef.current };
+    const cx = w / 2, cy = ht / 2;
+    nodes.forEach((n, i) => {
+      if (!p[n.id]) {
+        const a = (i / nodes.length) * Math.PI * 2;
+        const r = Math.min(w, ht) * 0.3;
+        p[n.id] = { x: cx + Math.cos(a) * r + (Math.random()-.5)*40, y: cy + Math.sin(a) * r + (Math.random()-.5)*40 };
+        v[n.id] = { vx: 0, vy: 0 };
+      }
+    });
+    Object.keys(p).forEach(k => { if (!nodes.find(n => n.id === k)) { delete p[k]; delete v[k]; } });
+    pRef.current = p; vRef.current = v; iRef.current = 0;
+
+    const tick = () => {
+      const pp = pRef.current, vv = vRef.current;
+      nodes.forEach(n => {
+        if (!vv[n.id]) vv[n.id] = { vx: 0, vy: 0 };
+        let fx = 0, fy = 0;
+        nodes.forEach(m => {
+          if (n.id === m.id) return;
+          const dx = pp[n.id].x - (pp[m.id]?.x || cx);
+          const dy = pp[n.id].y - (pp[m.id]?.y || cy);
+          const d = Math.sqrt(dx*dx + dy*dy) || 1;
+          const f = 3000 / (d * d);
+          fx += (dx/d)*f; fy += (dy/d)*f;
+        });
+        edges.forEach(e => {
+          let o = null;
+          if (e.from === n.id) o = e.to;
+          else if (e.to === n.id) o = e.from;
+          if (o && pp[o]) { fx += (pp[o].x - pp[n.id].x) * 0.008; fy += (pp[o].y - pp[n.id].y) * 0.008; }
+        });
+        fx += (cx - pp[n.id].x) * 0.01;
+        fy += (cy - pp[n.id].y) * 0.01;
+        vv[n.id].vx = (vv[n.id].vx + fx) * 0.7;
+        vv[n.id].vy = (vv[n.id].vy + fy) * 0.7;
+      });
+      nodes.forEach(n => {
+        if (pp[n.id] && vv[n.id]) {
+          pp[n.id] = {
+            x: Math.max(60, Math.min(w-60, pp[n.id].x + vv[n.id].vx)),
+            y: Math.max(30, Math.min(ht-30, pp[n.id].y + vv[n.id].vy))
+          };
+        }
+      });
+      pRef.current = { ...pp }; iRef.current++;
+      setPos({ ...pp });
+      if (iRef.current < 200) aRef.current = requestAnimationFrame(tick);
+    };
+    aRef.current = requestAnimationFrame(tick);
+    return () => aRef.current && cancelAnimationFrame(aRef.current);
+  }, [nodes.length, edges.length, w, ht]);
+  return pos;
+}
+
+function GraphView({ words, onSelect }) {
+  const cRef = useRef(null);
+  const [dims, setDims] = useState({ w: 350, h: 380 });
+  useEffect(() => {
+    const el = cRef.current; if (!el) return;
+    const ro = new ResizeObserver(es => { const { width, height } = es[0].contentRect; setDims({ w: width, h: height }); });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const edges = [], es = new Set();
+  words.forEach(w => (w.links||[]).forEach(l => {
+    const k = [w.id, l].sort().join('-');
+    if (!es.has(k) && words.find(x => x.id === l)) { es.add(k); edges.push({ from: w.id, to: l }); }
+  }));
+  const pos = useForceGraph(words, edges, dims.w, dims.h);
+
+  return h('div', { ref: cRef, style: { width: '100%', height: '100%' } },
+    h('svg', { width: dims.w, height: dims.h, style: { display: 'block' } },
+      edges.map((e, i) => {
+        const f = pos[e.from], t = pos[e.to];
+        return (f && t) ? h('line', { key: i, x1: f.x, y1: f.y, x2: t.x, y2: t.y, stroke: 'var(--accent-glow)', strokeWidth: 1.5 }) : null;
+      }),
+      words.map(wd => {
+        const p = pos[wd.id]; if (!p) return null;
+        const col = LANG_COLORS[wd.lang] || LANG_COLORS.other;
+        return h('g', { key: wd.id, onClick: () => onSelect(wd.id), style: { cursor: 'pointer' } },
+          h('circle', { cx: p.x, cy: p.y, r: 20, fill: 'var(--bg)', stroke: col, strokeWidth: 2 }),
+          h('text', { x: p.x, y: p.y + 1, textAnchor: 'middle', dominantBaseline: 'middle', fill: 'var(--text)', fontSize: wd.word.length > 4 ? 9 : 11, fontWeight: 500 },
+            wd.word.length > 6 ? wd.word.slice(0, 5) + '…' : wd.word),
+          wd.lang ? h('text', { x: p.x, y: p.y + 32, textAnchor: 'middle', fill: 'var(--text-muted)', fontSize: 9 }, wd.lang) : null
+        );
+      })
+    )
+  );
+}
+
+function WordForm({ onSave, allWords, editWord, onCancel }) {
+  const [word, setWord] = useState(editWord?.word || '');
+  const [meaning, setMeaning] = useState(editWord?.meaning || '');
+  const [lang, setLang] = useState(editWord?.lang || '');
+  const [tags, setTags] = useState(editWord?.tags?.join(', ') || '');
+  const [links, setLinks] = useState(editWord?.links || []);
+
+  const submit = () => {
+    if (!word.trim()) return;
+    onSave({ id: editWord?.id || genId(), word: word.trim(), meaning: meaning.trim(), lang: lang.trim() || null, tags: tags.split(',').map(t=>t.trim()).filter(Boolean), links, createdAt: editWord?.createdAt || new Date().toISOString() });
+    if (!editWord) { setWord(''); setMeaning(''); setLang(''); setTags(''); setLinks([]); }
+  };
+  const toggle = id => setLinks(p => p.includes(id) ? p.filter(l=>l!==id) : [...p, id]);
+  const linkable = allWords.filter(w => w.id !== editWord?.id);
+
+  return h('div', { className: 'form' },
+    h('div', { className: 'form-row' },
+      h('input', { className: 'input', style: { flex: 2 }, placeholder: '単語', value: word, onChange: e => setWord(e.target.value), onKeyDown: e => e.key === 'Enter' && submit() }),
+      h('input', { className: 'input', style: { flex: 0, width: 60, minWidth: 60 }, placeholder: '言語', value: lang, onChange: e => setLang(e.target.value) })
+    ),
+    h('textarea', { className: 'textarea mb8', placeholder: '意味・メモ', value: meaning, onChange: e => setMeaning(e.target.value) }),
+    h('input', { className: 'input mb8', placeholder: 'タグ（カンマ区切り）', value: tags, onChange: e => setTags(e.target.value) }),
+    linkable.length > 0 && h('div', { className: 'mb8' },
+      h('div', { className: 'label' }, 'リンク先'),
+      h('div', { className: 'link-chips' },
+        linkable.map(w => h('button', { key: w.id, className: 'link-chip' + (links.includes(w.id) ? ' active' : ''), onClick: () => toggle(w.id) }, w.word))
+      )
+    ),
+    h('div', { className: 'btn-row' },
+      onCancel && h('button', { className: 'btn btn-ghost', onClick: onCancel }, 'やめる'),
+      h('button', { className: 'btn btn-primary', disabled: !word.trim(), onClick: submit }, editWord ? '更新' : '追加')
+    )
+  );
+}
+
+function WordCard({ word, allWords, onEdit, onDelete, onNav }) {
+  const [open, setOpen] = useState(false);
+  const linked = (word.links||[]).map(id => allWords.find(w=>w.id===id)).filter(Boolean);
+  const col = LANG_COLORS[word.lang] || LANG_COLORS.other;
+
+  return h('div', { className: 'card', style: { borderLeftColor: col }, onClick: () => setOpen(!open) },
+    h('div', { className: 'card-header' },
+      h('div', { className: 'card-word' },
+        word.word,
+        word.lang && h('span', { className: 'lang-badge', style: { color: col, background: col + '18' } }, word.lang)
+      ),
+      h('span', { className: 'card-date' }, new Date(word.createdAt).toLocaleDateString('ja-JP'))
+    ),
+    word.meaning && h('div', { className: 'card-meaning' }, open ? word.meaning : word.meaning.length > 60 ? word.meaning.slice(0,60)+'…' : word.meaning),
+    open && h('div', { style: { marginTop: 8 } },
+      word.tags?.length > 0 && h('div', { style: { display:'flex', gap:4, flexWrap:'wrap', marginBottom:6 } },
+        word.tags.map((t,i) => h('span', { key: i, className: 'tag-chip' }, t))
+      ),
+      linked.length > 0 && h('div', { style: { display:'flex', gap:4, flexWrap:'wrap', marginBottom:8 } },
+        linked.map(lw => h('button', { key: lw.id, className: 'nav-chip', onClick: e => { e.stopPropagation(); onNav(lw.id); } }, '→ ' + lw.word))
+      ),
+      h('div', { className: 'btn-row' },
+        h('button', { className: 'text-btn edit', onClick: e => { e.stopPropagation(); onEdit(word); } }, '編集'),
+        h('button', { className: 'text-btn delete', onClick: e => { e.stopPropagation(); onDelete(word.id); } }, '削除')
+      )
+    )
+  );
+}
+
+function App() {
+  const [words, setWords] = useState(loadWords);
+  const [view, setView] = useState('list');
+  const [editing, setEditing] = useState(null);
+  const [search, setSearch] = useState('');
+  const [selMap, setSelMap] = useState(null);
+
+  const save = useCallback(nw => { setWords(nw); saveWords(nw); }, []);
+
+  const handleSave = w => {
+    const ex = words.find(x => x.id === w.id);
+    let nw;
+    if (ex) {
+      nw = words.map(x => x.id === w.id ? w : x);
+      nw = nw.map(x => {
+        if (x.id === w.id) return x;
+        const was = ex.links?.includes(x.id), is = w.links?.includes(x.id);
+        if (!was && is) return { ...x, links: [...(x.links||[]), w.id] };
+        if (was && !is) return { ...x, links: (x.links||[]).filter(l=>l!==w.id) };
+        return x;
+      });
+    } else {
+      nw = [...words, w];
+      nw = nw.map(x => {
+        if (x.id === w.id) return x;
+        if (w.links?.includes(x.id) && !(x.links||[]).includes(w.id)) return { ...x, links: [...(x.links||[]), w.id] };
+        return x;
+      });
+    }
+    save(nw); setEditing(null);
+    if (view === 'add') setView('list');
+  };
+
+  const handleDel = id => {
+    save(words.filter(w=>w.id!==id).map(w=>({...w, links:(w.links||[]).filter(l=>l!==id)})));
+    if (selMap === id) setSelMap(null);
+  };
+
+  const filtered = words.filter(w => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return w.word.toLowerCase().includes(s) || (w.meaning||'').toLowerCase().includes(s) || (w.tags||[]).some(t=>t.toLowerCase().includes(s)) || (w.lang||'').toLowerCase().includes(s);
+  });
+
+  const selWord = selMap ? words.find(w=>w.id===selMap) : null;
+
+  return h('div', null,
+    h('div', { className: 'header' },
+      h('div', { className: 'header-top' },
+        h('h1', null, '▲ ことばの地図'),
+        h('span', { className: 'word-count' }, words.length + ' words')
+      ),
+      h('div', { className: 'tabs' },
+        ['list','map','add'].map(k =>
+          h('button', { key: k, className: 'tab' + (view===k?' active':'') + (k==='add'?' narrow':''), onClick: () => { setView(k); setSelMap(null); } },
+            k==='list'?'一覧':k==='map'?'マップ':'＋')
+        )
+      )
+    ),
+    h('div', { className: 'content' },
+      view === 'add' && h('div', null,
+        h('div', { className: 'label', style: { marginBottom: 8 } }, '新しい単語を追加'),
+        h(WordForm, { onSave: handleSave, allWords: words })
+      ),
+      view === 'list' && h('div', null,
+        h('input', { className: 'input', style: { marginBottom: 12 }, placeholder: '検索…', value: search, onChange: e => setSearch(e.target.value) }),
+        editing && h('div', { style: { marginBottom: 12 } }, h(WordForm, { onSave: handleSave, allWords: words, editWord: editing, onCancel: () => setEditing(null) })),
+        h('div', { className: 'cards' },
+          filtered.length === 0
+            ? h('div', { className: 'empty' }, words.length === 0 ? 'まだ何もない。＋から始めよう。' : '見つからない')
+            : filtered.map(w => h(WordCard, { key: w.id, word: w, allWords: words, onEdit: setEditing, onDelete: handleDel, onNav: id => setSearch('') }))
+        ),
+        words.length > 0 && h('div', { className: 'reset-row' },
+          h('button', { className: 'reset-btn', onClick: () => { if(confirm('すべての単語を削除しますか？')) save([]); } }, '全削除')
+        )
+      ),
+      view === 'map' && h('div', null,
+        words.length < 2
+          ? h('div', { className: 'empty', style: { padding: 60 } }, '2つ以上の単語を登録するとマップが見れます')
+          : h('div', { className: 'graph-container' }, h(GraphView, { words, onSelect: id => setSelMap(id) })),
+        selWord && h('div', { style: { marginTop: 12 } },
+          h(WordCard, { word: selWord, allWords: words, onEdit: w => { setEditing(w); setView('list'); }, onDelete: handleDel, onNav: id => setSelMap(id) }))
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app')).render(h(App));
+</script>
+</body>
+</html>
